@@ -1,0 +1,11 @@
+# C# build artifacts
+[Bb]in/
+[Oo]bj/
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# macOS junk
+.DS_Store

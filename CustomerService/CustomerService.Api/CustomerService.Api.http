@@ -1,0 +1,16 @@
+@CustomerService.Api_HostAddress = http://localhost:5001
+
+GET {{CustomerService.Api_HostAddress}}/api/customers/1
+Accept: application/json
+
+###
+
+POST {{CustomerService.Api_HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+  "name": "Customer Sample",
+  "email": "customer@example.com"
+}
+
+###
