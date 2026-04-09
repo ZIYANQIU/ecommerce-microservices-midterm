@@ -1,45 +1,74 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   customerservice:
-    container_name: customerservice
     build:
       context: ./CustomerService/CustomerService.Api
       dockerfile: Dockerfile
-    ports:
-      - "5001:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
 
   sellerservice:
-    container_name: sellerservice
     build:
       context: ./SellerService/SellerService.Api
       dockerfile: Dockerfile
-    ports:
-      - "5003:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
 
   productservice:
-    container_name: productservice
     build:
       context: ./ProductService/ProductService.Api
       dockerfile: Dockerfile
-    ports:
-      - "5004:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__HostName: rabbitmq
     depends_on:
-      - sellerservice
+      sellerservice:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
 
   orderservice:
-    container_name: orderservice
     build:
       context: ./OrderService/OrderService.Api
       dockerfile: Dockerfile
-    ports:
-      - "5002:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__HostName: rabbitmq
     depends_on:
-      - customerservice
-      - productservice
+      customerservice:
+        condition: service_started
+      productservice:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  apigateway:
+    build:
+      context: ./ApiGateway/ApiGateway.Api
+      dockerfile: Dockerfile
+    ports:
+      - "5240:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Services__OrderServiceBaseUrl: http://orderservice:8080
+      Services__ProductServiceBaseUrl: http://productservice:8080
+      Services__CustomerServiceBaseUrl: http://customerservice:8080
+    depends_on:
+      customerservice:
+        condition: service_started
+      sellerservice:
+        condition: service_started
+      productservice:
+        condition: service_started
+      orderservice:
+        condition: service_started

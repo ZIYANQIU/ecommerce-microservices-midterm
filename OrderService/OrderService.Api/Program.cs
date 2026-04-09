@@ -3,6 +3,7 @@ using OrderService.Api.Data;
 using OrderService.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var rabbitMqHost = builder.Configuration["RabbitMQ:HostName"] ?? "localhost";
 
 builder.Services.AddDbContext<OrdersDbContext>(options =>
     options.UseSqlite("Data Source=orders.db"));
@@ -14,6 +15,7 @@ builder.Services.AddHttpClient<IProductClient, ProductClient>(client =>
 {
     client.BaseAddress = new Uri("http://productservice:8080/");
 });
+builder.Services.AddSingleton<IOrderEventPublisher>(new RabbitMQPublisher(rabbitMqHost));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
