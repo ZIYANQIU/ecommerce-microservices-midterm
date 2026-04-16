@@ -6,6 +6,7 @@ namespace ApiGateway.Api.Controllers;
 
 [ApiController]
 [Route("gateway/products")]
+[Route("products")]
 public class ProductsGatewayController : ControllerBase
 {
     private readonly IHttpClientFactory _httpClientFactory;
