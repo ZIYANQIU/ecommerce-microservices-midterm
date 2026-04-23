@@ -1,7 +1,51 @@
-﻿@page "/"
+@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>E-Commerce Frontend</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<div class="row g-4">
+    <div class="col-12">
+        <div class="p-4 bg-light border rounded-3">
+            <h1 class="mb-3">E-Commerce Gateway Frontend</h1>
+            <p class="mb-0">
+                This Blazor frontend talks to the backend only through the API Gateway and covers the required
+                product, customer, and order workflows.
+            </p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h4">Products</h2>
+                <p>View all products and add a new product using an existing seller.</p>
+                <a class="btn btn-primary" href="/products">Open Products</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h4">Customers</h2>
+                <p>Browse the customer list and add a new customer record.</p>
+                <a class="btn btn-primary" href="/customers">Open Customers</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h4">Orders</h2>
+                <p>Create an order from existing products and customers, then review order history.</p>
+                <a class="btn btn-primary" href="/orders">Open Orders</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h4">Sellers</h2>
+                <p>Browse seller records and add a new seller for product creation.</p>
+                <a class="btn btn-primary" href="/sellers">Open Sellers</a>
+            </div>
+        </div>
+    </div>
+</div>

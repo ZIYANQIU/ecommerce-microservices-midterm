@@ -72,3 +72,13 @@ services:
         condition: service_started
       orderservice:
         condition: service_started
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5227:80"
+    depends_on:
+      apigateway:
+        condition: service_started

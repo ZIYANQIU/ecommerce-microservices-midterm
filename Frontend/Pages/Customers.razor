@@ -1,0 +1,121 @@
+@page "/customers"
+@inject ApiService Api
+
+<PageTitle>Customers</PageTitle>
+
+<h3>Customers</h3>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="container">
+    <div class="card p-3 m-2">
+        <h5>Add Customer</h5>
+
+        <EditForm Model="@createCustomer" OnValidSubmit="@CreateCustomerAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+                <div class="col-md-5 mb-2">
+                    <InputText class="form-control" @bind-Value="createCustomer.Name" placeholder="Customer name" />
+                </div>
+                <div class="col-md-5 mb-2">
+                    <InputText class="form-control" @bind-Value="createCustomer.Email" placeholder="Customer email" />
+                </div>
+                <div class="col-md-2 mb-2">
+                    <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">Add Customer</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (customers.Count == 0)
+{
+    <p>No customers found.</p>
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            @foreach (var customer in customers)
+            {
+                <div class="col-md-4">
+                    <div class="card p-2 m-2">
+                        <h5>@customer.Name</h5>
+                        <p class="mb-1">ID: @customer.Id</p>
+                        <p class="mb-0">Email: @customer.Email</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<CustomerDto> customers = [];
+    private CreateCustomerRequest createCustomer = new();
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            customers = await Api.GetCustomersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateCustomerAsync()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            await Api.CreateCustomerAsync(createCustomer);
+            createCustomer = new CreateCustomerRequest();
+            successMessage = "Customer created successfully.";
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

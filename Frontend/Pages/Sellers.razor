@@ -1,0 +1,121 @@
+@page "/sellers"
+@inject ApiService Api
+
+<PageTitle>Sellers</PageTitle>
+
+<h3>Sellers</h3>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="container">
+    <div class="card p-3 m-2">
+        <h5>Add Seller</h5>
+
+        <EditForm Model="@createSeller" OnValidSubmit="@CreateSellerAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+                <div class="col-md-5 mb-2">
+                    <InputText class="form-control" @bind-Value="createSeller.Name" placeholder="Seller name" />
+                </div>
+                <div class="col-md-5 mb-2">
+                    <InputText class="form-control" @bind-Value="createSeller.Email" placeholder="Seller email" />
+                </div>
+                <div class="col-md-2 mb-2">
+                    <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">Add Seller</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (sellers.Count == 0)
+{
+    <p>No sellers found.</p>
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            @foreach (var seller in sellers)
+            {
+                <div class="col-md-4">
+                    <div class="card p-2 m-2">
+                        <h5>@seller.Name</h5>
+                        <p class="mb-1">ID: @seller.Id</p>
+                        <p class="mb-0">Email: @seller.Email</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<SellerDto> sellers = [];
+    private CreateSellerRequest createSeller = new();
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            sellers = await Api.GetSellersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateSellerAsync()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            await Api.CreateSellerAsync(createSeller);
+            createSeller = new CreateSellerRequest();
+            successMessage = "Seller created successfully.";
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

@@ -1,0 +1,161 @@
+@page "/orders"
+@inject ApiService Api
+
+<PageTitle>Orders</PageTitle>
+
+<h3>Orders</h3>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="container">
+    <div class="card p-3 m-2">
+        <h5>Create Order</h5>
+
+        @if (customers.Count == 0 || products.Count == 0)
+        {
+            <p class="mb-0">Orders require at least one customer and one product.</p>
+        }
+        else
+        {
+            <EditForm Model="@createOrder" OnValidSubmit="@CreateOrderAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <InputSelect class="form-select" @bind-Value="createOrder.CustomerId">
+                            <option value="0">Select customer</option>
+                            @foreach (var customer in customers)
+                            {
+                                <option value="@customer.Id">@customer.Name (#@customer.Id)</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <InputSelect class="form-select" @bind-Value="createOrder.ProductId" @bind-Value:after="UpdateOrderTotal">
+                            <option value="0">Select product</option>
+                            @foreach (var product in products)
+                            {
+                                <option value="@product.Id">@product.Name (#@product.Id)</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <InputNumber class="form-control" @bind-Value="createOrder.Quantity" @bind-Value:after="UpdateOrderTotal" placeholder="Quantity" />
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <InputNumber class="form-control" @bind-Value="createOrder.Total" disabled />
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">Create Order</button>
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (orders.Count == 0)
+{
+    <p>No orders found.</p>
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            @foreach (var order in orders)
+            {
+                <div class="col-md-4">
+                    <div class="card p-2 m-2">
+                        <h5>Order #@order.Id</h5>
+                        <p>Customer ID: @order.CustomerId</p>
+                        <p>Product ID: @order.ProductId</p>
+                        <p>Quantity: @order.Quantity</p>
+                        <p>Total: @order.Total.ToString("0.00")</p>
+                        <p class="mb-0">Status: @order.Status</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<OrderDto> orders = [];
+    private List<CustomerDto> customers = [];
+    private List<ProductDto> products = [];
+    private CreateOrderRequest createOrder = new() { Quantity = 1 };
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            customers = await Api.GetCustomersAsync();
+            products = await Api.GetProductsAsync();
+            orders = await Api.GetOrdersAsync();
+            UpdateOrderTotal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateOrderAsync()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+        successMessage = null;
+        UpdateOrderTotal();
+
+        try
+        {
+            await Api.CreateOrderAsync(createOrder);
+            createOrder = new CreateOrderRequest { Quantity = 1 };
+            successMessage = "Order created successfully.";
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void UpdateOrderTotal()
+    {
+        var product = products.FirstOrDefault(item => item.Id == createOrder.ProductId);
+        createOrder.Total = product is null ? 0 : product.Price * createOrder.Quantity;
+    }
+}

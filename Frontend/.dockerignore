@@ -1,0 +1,4 @@
+bin/
+obj/
+frontend-run.out.log
+frontend-run.err.log

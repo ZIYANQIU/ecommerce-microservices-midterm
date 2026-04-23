@@ -1,13 +1,69 @@
 @page "/products"
-@using Frontend.Models
-@using Frontend.Services
 @inject ApiService Api
+
+<PageTitle>Products</PageTitle>
 
 <h3>Products</h3>
 
-@if (products == null)
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="container">
+    <div class="card p-3 m-2">
+        <h5>Add Product</h5>
+
+        @if (sellers.Count == 0)
+        {
+            <p class="mb-0">No sellers found. Please create seller data first.</p>
+        }
+        else
+        {
+            <EditForm Model="@createProduct" OnValidSubmit="@CreateProductAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <InputText class="form-control" @bind-Value="createProduct.Name" placeholder="Product name" />
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <InputNumber class="form-control" @bind-Value="createProduct.Price" placeholder="Price" />
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <InputNumber class="form-control" @bind-Value="createProduct.Stock" placeholder="Stock" />
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <InputSelect class="form-select" @bind-Value="createProduct.SellerId">
+                            <option value="0">Select seller</option>
+                            @foreach (var seller in sellers)
+                            {
+                                <option value="@seller.Id">@seller.Name (#@seller.Id)</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">Add Product</button>
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@if (isLoading)
 {
     <p>Loading...</p>
+}
+else if (products.Count == 0)
+{
+    <p>No products found.</p>
 }
 else
 {
@@ -18,8 +74,9 @@ else
                 <div class="col-md-4">
                     <div class="card p-2 m-2">
                         <h5>@product.Name</h5>
-                        <p>Price: @product.Price</p>
+                        <p>Price: @product.Price.ToString("0.00")</p>
                         <p>Stock: @product.Stock</p>
+                        <p class="mb-0">Seller ID: @product.SellerId</p>
                     </div>
                 </div>
             }
@@ -28,10 +85,59 @@ else
 }
 
 @code {
-    private List<ProductDto> products;
+    private List<ProductDto> products = [];
+    private List<SellerDto> sellers = [];
+    private CreateProductRequest createProduct = new();
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? errorMessage;
+    private string? successMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        products = await Api.GetProductsAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            products = await Api.GetProductsAsync();
+            sellers = await Api.GetSellersAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateProductAsync()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            await Api.CreateProductAsync(createProduct);
+            createProduct = new CreateProductRequest();
+            successMessage = "Product created successfully.";
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 }
